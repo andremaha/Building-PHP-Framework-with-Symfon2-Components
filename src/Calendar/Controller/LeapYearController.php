@@ -13,9 +13,14 @@ class LeapYearController
         $leapyear = new LeapYear();
 
         if ($leapyear->isLeapYear($year[0])) {
-            return new Response('Yep, this is a leap year! Have fun!');
-        }
+            $response = new Response('Yep, this is a leap year! Have fun!' . rand());
+        } else {
+			$response = new Response('Nope, this is not a leap year. Wait for it.');
+		}
 
-        return new Response('Nope, this is not a leap year. Wait for it.');
+		// Time to Live = 10 seconds
+		$response->setTtl(10);
+
+        return $response;
     }
 }
