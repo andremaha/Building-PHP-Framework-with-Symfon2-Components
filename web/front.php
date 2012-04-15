@@ -10,16 +10,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing;
 use Symfony\Component\HttpKernel;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
-// Render the template according to the Request
-function render_template($request)
-{
-    extract($request->attributes->all(), EXTR_SKIP);
-    ob_start();
-    require sprintf(__DIR__ . '/../src/pages/%s.php', $_route);
-
-    return new Response(ob_get_clean());
-}
 
 $request = Request::createFromGlobals();
 $routes = include __DIR__ . '/../src/app.php';
@@ -29,7 +21,10 @@ $context->fromRequest($request);
 $matcher = new Routing\Matcher\UrlMatcher($routes, $context);
 $resolver = new HttpKernel\Controller\ControllerResolver();
 
-$framework = new Simplex\Framework($matcher, $resolver);
-$response = $framework->handle($request);
+$dispatcher = new EventDispatcher();
+$dispatcher->addSubscriber(new Simplex\GoogleListener());
 
+$framework = new Simplex\Framework($dispatcher, $matcher, $resolver);
+$response = $framework->handle($request);
+ 
 $response->send();

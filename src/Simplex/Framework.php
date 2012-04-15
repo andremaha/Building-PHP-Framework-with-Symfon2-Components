@@ -12,11 +12,13 @@ class Framework
 {
     protected $matcher;
     protected $resolver;
+	protected $dispatcher;
 
-    public function __construct($matcher, $resolver)
+    public function __construct($dispatcher, $matcher, $resolver)
     {
         $this->matcher = $matcher;
         $this->resolver = $resolver;
+		$this->dispatcher = $dispatcher;
     }
 
     public function handle(Request $request)
@@ -27,11 +29,16 @@ class Framework
             $controller = $this->resolver->getController($request);
             $arguments = $this->resolver->getArguments($request, $controller);
 
-            return call_user_func($controller, $arguments);
+            $response = call_user_func($controller, $arguments);
         } catch (ResourceNotFoundException $e) {
-            return new Response('Oooops, we did not find this page!', 404);
+            $response = new Response('Oooops, we did not find this page!', 404);
         } catch (\Exception $e) {
-            return new Response('Wow, something is really broken here!', 500);
+            $response = new Response('Wow, something is really broken here!', 500);
         }
+
+		// A new event - Response
+		$this->dispatcher->dispatch('response', new ResponseEvent($response, $request));
+		
+		return $response;
     }
 }
